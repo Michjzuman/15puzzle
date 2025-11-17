@@ -300,19 +300,22 @@ body {
   font-size: 1.1rem;
   letter-spacing: 0.3rem;
   color: var(--accent);
+  white-space: nowrap;
 }
 
 .ticker span {
   display: inline-block;
-  animation: ticker 20s linear infinite;
+  min-width: 100%;
+  padding-left: 100%;
+  animation: ticker 25s linear infinite;
 }
 
 @keyframes ticker {
   0% {
-    transform: translateX(0);
+    transform: translateX(100%);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-100%);
   }
 }
 

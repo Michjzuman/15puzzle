@@ -12,9 +12,11 @@ const shuffleBtn = document.getElementById("shuffle-btn");
 const resetBtn = document.getElementById("solve-btn");
 const toastEl = document.getElementById("toast");
 const toastTextEl = document.getElementById("toast-text");
+const tickerTextEl = document.getElementById("ticker-text");
 
 const BEST_TIME_KEY = "retro15-best-time";
 const SAVE_KEY = "retro15-save";
+const TICKER_REFRESH_MS = 10 * 60 * 1000; // 10 Minuten
 
 let state = [...solvedState];
 let moves = 0;
@@ -50,6 +52,8 @@ function init() {
   updateMoveDisplay();
   updateTimerDisplay(getElapsedTime());
   bindEvents();
+  fetchTechNews();
+  setInterval(fetchTechNews, TICKER_REFRESH_MS);
 
   if (!restored) {
     startGame();
@@ -196,6 +200,36 @@ function resetBoard() {
   stopTimer({ resetDisplay: true });
   showToast("Zurückgesetzt.");
   saveGame();
+}
+
+async function fetchTechNews() {
+  if (!tickerTextEl) return;
+  const fallbackText =
+    "Tech-News: Live-Feed momentan nicht erreichbar. Mehr Glück beim Puzzle!";
+
+  try {
+    const response = await fetch(
+      "https://hn.algolia.com/api/v1/search_by_date?tags=story&query=technology&hitsPerPage=8"
+    );
+    if (!response.ok) {
+      throw new Error(`Ticker HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    const headlines = (data?.hits ?? [])
+      .map((hit) => hit.title || hit.story_title || "")
+      .map((title) => title.trim().replace(/\s+/g, " "))
+      .filter(Boolean)
+      .slice(0, 4);
+
+    if (!headlines.length) {
+      throw new Error("Keine Schlagzeilen erhalten");
+    }
+
+    tickerTextEl.textContent = `Tech-News: ${headlines.join(" — ")}`;
+  } catch (error) {
+    console.error("Ticker konnte nicht aktualisiert werden", error);
+    tickerTextEl.textContent = fallbackText;
+  }
 }
 
 function generateSolvableState() {
