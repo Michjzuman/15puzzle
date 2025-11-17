@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retro 15-Puzzle</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+      crossorigin
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="crt-overlay"></div>
+    <main class="shell">
+      <header class="hud">
+        <div>
+          <h1>15 Puzzle</h1>
+          <p>Ordne die Kacheln 1-15.</p>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <span>Züge</span>
+            <strong id="move-count">000</strong>
+          </div>
+          <div class="stat">
+            <span>Bestzeit</span>
+            <strong id="best-time">--:--</strong>
+          </div>
+        </div>
+      </header>
+      <section class="game-area">
+        <div class="board" id="board"></div>
+        <aside class="controls">
+          <button id="shuffle-btn" class="btn primary">Mischen</button>
+          <button id="solve-btn" class="btn ghost">Zurücksetzen</button>
+          <p class="tip">
+            Tipp: Du kannst auch mit den Pfeiltasten und WASD spielen.
+          </p>
+          <div class="timer">
+            <span>Zeit</span>
+            <strong id="timer">00:00</strong>
+          </div>
+        </aside>
+      </section>
+      <footer class="ticker">
+        <span id="ticker-text"
+          >RETRO SYS V1.5 &mdash; GL HF &mdash; SPECTRUM ENGINE ONLINE &mdash;
+          ACHTE AUF DIE CRT-GLITCHES &mdash;</span
+        >
+      </footer>
+    </main>
+    <template id="tile-template">
+      <button class="tile" type="button"></button>
+    </template>
+    <div class="toast hidden" id="toast">
+      <p id="toast-text"></p>
+    </div>
+    <script src="script.js" type="module"></script>
+  </body>
+</html>
