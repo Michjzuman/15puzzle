@@ -1,7 +1,19 @@
-const SIZE = 4;
-const solvedState = Array.from({ length: SIZE * SIZE }, (_, idx) =>
-  idx + 1 === SIZE * SIZE ? 0 : idx + 1
+const SIZE_OPTIONS = [3, 4, 5, 6];
+const SIZE_STORAGE_KEY = "retro15-size";
+const SAVE_KEY = "retro15-save";
+const BEST_TIME_KEY_PREFIX = "retro15-best-time-";
+
+const sizeInputEl = document.getElementById("size-input");
+const startScreenEl = document.getElementById("start-screen");
+const startFormEl = document.getElementById("start-form");
+const closeMenuBtn = document.getElementById("close-menu-btn");
+const sizeOptionButtons = Array.from(
+  document.querySelectorAll("[data-size-option]")
 );
+
+let size = getStoredSize();
+let solvedState = createSolvedState(size);
+let state = [...solvedState];
 
 const boardEl = document.getElementById("board");
 const tileTemplate = document.getElementById("tile-template");
@@ -13,10 +25,9 @@ const resetBtn = document.getElementById("solve-btn");
 const toastEl = document.getElementById("toast");
 const toastTextEl = document.getElementById("toast-text");
 
-const BEST_TIME_KEY = "retro15-best-time";
-const SAVE_KEY = "retro15-save";
+const sizeMenuBtn = document.getElementById("size-btn");
+const BEST_TIME_KEY = () => `${BEST_TIME_KEY_PREFIX}${size}`;
 
-let state = [...solvedState];
 let moves = 0;
 let bestTime = null;
 let timerInterval = null;
@@ -44,15 +55,18 @@ const keyToDirection = {
 init();
 
 function init() {
+  boardEl.style.setProperty("--size", size);
   loadBestTime();
   const restored = restoreGame();
   renderBoard();
   updateMoveDisplay();
   updateTimerDisplay(getElapsedTime());
   bindEvents();
+  setPendingSizeSelection(size);
+  updateSizeOptionTimes();
 
   if (!restored) {
-    startGame();
+    showStartScreen();
   } else if (restored.shouldResume) {
     resumeTimer();
   }
@@ -62,6 +76,29 @@ function bindEvents() {
   shuffleBtn.addEventListener("click", startGame);
   resetBtn.addEventListener("click", resetBoard);
   window.addEventListener("keydown", handleKeyPress);
+  sizeMenuBtn.addEventListener("click", showStartScreen);
+  startFormEl.addEventListener("submit", handleStartFormSubmit);
+  closeMenuBtn.addEventListener("click", hideStartScreen);
+  sizeOptionButtons.forEach((button) => {
+    button.addEventListener("click", () => handleSizeOptionClick(button));
+  });
+}
+
+function handleStartFormSubmit(event) {
+  event.preventDefault();
+  const selectedSize = Number(sizeInputEl?.value ?? size);
+  if (!SIZE_OPTIONS.includes(selectedSize)) return;
+  if (selectedSize !== size) {
+    setSize(selectedSize);
+  }
+  hideStartScreen();
+  startGame();
+}
+
+function handleSizeOptionClick(button) {
+  const optionSize = Number(button.dataset.sizeOption);
+  if (!SIZE_OPTIONS.includes(optionSize)) return;
+  setPendingSizeSelection(optionSize);
 }
 
 function renderBoard() {
@@ -164,10 +201,10 @@ function tryMove(index) {
 }
 
 function isAdjacent(idxA, idxB) {
-  const rowA = Math.floor(idxA / SIZE);
-  const colA = idxA % SIZE;
-  const rowB = Math.floor(idxB / SIZE);
-  const colB = idxB % SIZE;
+  const rowA = Math.floor(idxA / size);
+  const colA = idxA % size;
+  const rowB = Math.floor(idxB / size);
+  const colB = idxB % size;
   return (
     (rowA === rowB && Math.abs(colA - colB) === 1) ||
     (colA === colB && Math.abs(rowA - rowB) === 1)
@@ -216,8 +253,8 @@ function shuffleArray(arr) {
 
 function isSolvable(arr) {
   const inversionCount = getInversionCount(arr);
-  const blankRowFromBottom = SIZE - Math.floor(arr.indexOf(0) / SIZE);
-  if (SIZE % 2 !== 0) {
+  const blankRowFromBottom = size - Math.floor(arr.indexOf(0) / size);
+  if (size % 2 !== 0) {
     return inversionCount % 2 === 0;
   }
   if (blankRowFromBottom % 2 === 0) {
@@ -312,21 +349,34 @@ function updateMoveDisplay() {
 }
 
 function loadBestTime() {
-  const stored = localStorage.getItem(BEST_TIME_KEY);
+  const stored = localStorage.getItem(BEST_TIME_KEY());
   if (!stored) {
+    bestTime = null;
     bestTimeEl.textContent = "--:--";
-    return;
+  } else {
+    const parsed = Number(stored);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      bestTime = parsed;
+      bestTimeEl.textContent = formatTime(bestTime);
+    } else {
+      bestTime = null;
+      bestTimeEl.textContent = "--:--";
+    }
   }
-  bestTime = Number(stored);
-  bestTimeEl.textContent = formatTime(bestTime);
+  updateSizeOptionTimes();
 }
 
 function updateBestTime(duration) {
-  if (!duration) return;
-  if (!bestTime || duration < bestTime) {
+  if (!Number.isFinite(duration)) return;
+  if (bestTime === null || duration < bestTime) {
     bestTime = duration;
-    localStorage.setItem(BEST_TIME_KEY, String(bestTime));
     bestTimeEl.textContent = formatTime(bestTime);
+    try {
+      localStorage.setItem(BEST_TIME_KEY(), String(bestTime));
+    } catch {
+      // ignore quota errors
+    }
+    updateSizeOptionTimes();
   }
 }
 
@@ -342,16 +392,16 @@ function moveByDirection(direction) {
   let targetIndex = null;
   switch (direction) {
     case "up":
-      if (blankIndex >= SIZE) targetIndex = blankIndex - SIZE;
+      if (blankIndex >= size) targetIndex = blankIndex - size;
       break;
     case "down":
-      if (blankIndex < SIZE * (SIZE - 1)) targetIndex = blankIndex + SIZE;
+      if (blankIndex < size * (size - 1)) targetIndex = blankIndex + size;
       break;
     case "left":
-      if (blankIndex % SIZE !== 0) targetIndex = blankIndex - 1;
+      if (blankIndex % size !== 0) targetIndex = blankIndex - 1;
       break;
     case "right":
-      if (blankIndex % SIZE !== SIZE - 1) targetIndex = blankIndex + 1;
+      if (blankIndex % size !== size - 1) targetIndex = blankIndex + 1;
       break;
     default:
       break;
@@ -382,6 +432,7 @@ function saveGame() {
     timerBase: getElapsedTime(),
     timerRunning: Boolean(timerStartTimestamp),
     markedTiles: Array.from(markedTiles),
+    size,
   };
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
@@ -395,14 +446,24 @@ function restoreGame() {
   if (!raw) return null;
   try {
     const data = JSON.parse(raw);
-    if (!Array.isArray(data.board) || data.board.length !== solvedState.length) {
+    if (!Array.isArray(data.board)) {
       return null;
     }
     const board = data.board.map((value) => Number(value));
     if (board.some((value) => Number.isNaN(value))) {
       return null;
     }
-    state = board;
+    const derivedSize = Number.isFinite(data.size)
+      ? Number(data.size)
+      : Math.sqrt(board.length);
+    if (!SIZE_OPTIONS.includes(derivedSize)) {
+      return null;
+    }
+    setSize(derivedSize, { preserveState: true });
+    state = [...board];
+    if (state.length !== size * size) {
+      return null;
+    }
     moves = Number.isFinite(data.moves) ? data.moves : 0;
     gameActive = Boolean(data.gameActive);
     timerBase = Number.isFinite(data.timerBase) ? data.timerBase : 0;
@@ -428,4 +489,85 @@ function showToast(message) {
   toastTimeout = setTimeout(() => {
     toastEl.classList.add("hidden");
   }, 2200);
+}
+
+function createSolvedState(currentSize) {
+  return Array.from({ length: currentSize * currentSize }, (_, idx) =>
+    idx + 1 === currentSize * currentSize ? 0 : idx + 1
+  );
+}
+
+function getStoredSize() {
+  const stored = Number(localStorage.getItem(SIZE_STORAGE_KEY));
+  if (SIZE_OPTIONS.includes(stored)) {
+    return stored;
+  }
+  return 4;
+}
+
+function setSize(newSize, { preserveState = false } = {}) {
+  if (!SIZE_OPTIONS.includes(newSize)) return;
+  const hasChanged = size !== newSize;
+  size = newSize;
+  solvedState = createSolvedState(size);
+  boardEl.style.setProperty("--size", size);
+  localStorage.setItem(SIZE_STORAGE_KEY, String(size));
+  loadBestTime();
+  setPendingSizeSelection(size);
+  if (!preserveState && hasChanged) {
+    state = [...solvedState];
+    moves = 0;
+    markedTiles.clear();
+    gameActive = false;
+    stopTimer({ resetDisplay: true });
+    updateMoveDisplay();
+    renderBoard();
+  }
+}
+
+function showStartScreen() {
+  setPendingSizeSelection(size);
+  updateSizeOptionTimes();
+  startScreenEl.classList.add("is-visible");
+  startScreenEl.setAttribute("aria-hidden", "false");
+}
+
+function hideStartScreen() {
+  startScreenEl.classList.remove("is-visible");
+  startScreenEl.setAttribute("aria-hidden", "true");
+}
+
+function setPendingSizeSelection(selectedSize) {
+  if (sizeInputEl) {
+    sizeInputEl.value = String(selectedSize);
+  }
+  sizeOptionButtons.forEach((button) => {
+    const buttonSize = Number(button.dataset.sizeOption);
+    const isActive = buttonSize === selectedSize;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function getBestTimeForSize(targetSize) {
+  if (!SIZE_OPTIONS.includes(targetSize)) return null;
+  const stored = localStorage.getItem(`${BEST_TIME_KEY_PREFIX}${targetSize}`);
+  if (!stored) return null;
+  const parsed = Number(stored);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function updateSizeOptionTimes() {
+  if (!sizeOptionButtons.length) return;
+  sizeOptionButtons.forEach((button) => {
+    const buttonSize = Number(button.dataset.sizeOption);
+    const bestTimeValue = getBestTimeForSize(buttonSize);
+    const label = button.querySelector("[data-best-time]");
+    if (label) {
+      label.textContent =
+        bestTimeValue !== null
+          ? `Bestzeit: ${formatTime(bestTimeValue)}`
+          : "Bestzeit: --:--";
+    }
+  });
 }

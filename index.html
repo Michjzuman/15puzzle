@@ -44,6 +44,7 @@
         <aside class="controls">
           <button id="shuffle-btn" class="btn primary">Mischen</button>
           <button id="solve-btn" class="btn ghost">Zurücksetzen</button>
+          <button id="size-btn" class="btn ghost">Größe wählen</button>
           <p class="tip">
             Tipp: Du kannst auch mit den Pfeiltasten und WASD spielen.
           </p>
@@ -64,6 +65,60 @@
     </template>
     <div class="toast hidden" id="toast">
       <p id="toast-text"></p>
+    </div>
+    <div class="start-screen" id="start-screen" aria-hidden="true">
+      <div class="start-panel">
+        <h2>Starte deine Mission</h2>
+        <p>Wähle eine Brettgröße und beginne ein neues Spiel.</p>
+        <form id="start-form" class="start-form">
+          <input type="hidden" id="size-input" name="size" value="4" />
+          <div class="size-picker" role="radiogroup" aria-label="Brettgröße">
+            <button
+              type="button"
+              class="size-option"
+              data-size-option="3"
+              aria-pressed="false"
+            >
+              <span class="label">3 × 3</span>
+              <span class="best-time" data-best-time>Bestzeit: --:--</span>
+            </button>
+            <button
+              type="button"
+              class="size-option"
+              data-size-option="4"
+              aria-pressed="false"
+            >
+              <span class="label">4 × 4</span>
+              <span class="best-time" data-best-time>Bestzeit: --:--</span>
+            </button>
+            <button
+              type="button"
+              class="size-option"
+              data-size-option="5"
+              aria-pressed="false"
+            >
+              <span class="label">5 × 5</span>
+              <span class="best-time" data-best-time>Bestzeit: --:--</span>
+            </button>
+            <button
+              type="button"
+              class="size-option"
+              data-size-option="6"
+              aria-pressed="false"
+            >
+              <span class="label">6 × 6</span>
+              <span class="best-time" data-best-time>Bestzeit: --:--</span>
+            </button>
+          </div>
+          <p class="start-note">Jede Größe bewahrt ihren eigenen Highscore.</p>
+          <div class="start-actions">
+            <button type="submit" class="btn primary">Spiel starten</button>
+            <button type="button" id="close-menu-btn" class="btn ghost">
+              Zurück
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
     <script src="script.js" type="module"></script>
   </body>
