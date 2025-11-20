@@ -68,8 +68,20 @@
     </div>
     <div class="start-screen" id="start-screen" aria-hidden="true">
       <div class="start-panel">
-        <h2>Starte deine Mission</h2>
-        <p>Wähle eine Brettgröße und beginne ein neues Spiel.</p>
+        <div class="start-header">
+          <div class="start-copy">
+            <p class="eyebrow">Galaktische Missionszentrale</p>
+            <h2>Starte deine Mission</h2>
+            <p>
+              Wähle eine Brettgröße, lies die Einsatzdaten und beginne ein neues
+              Spiel.
+            </p>
+          </div>
+          <div class="start-preview" aria-hidden="true">
+            <div class="preview-grid" data-preview-grid></div>
+            <span class="preview-label">Aktuelle Auswahl</span>
+          </div>
+        </div>
         <form id="start-form" class="start-form">
           <input type="hidden" id="size-input" name="size" value="4" />
           <div class="size-picker" role="radiogroup" aria-label="Brettgröße">
@@ -110,7 +122,10 @@
               <span class="best-time" data-best-time>Bestzeit: --:--</span>
             </button>
           </div>
-          <p class="start-note">Jede Größe bewahrt ihren eigenen Highscore.</p>
+          <p class="start-note">
+            Jede Größe bewahrt ihren eigenen Highscore – die Vorschau passt sich
+            live an.
+          </p>
           <div class="start-actions">
             <button type="submit" class="btn primary">Spiel starten</button>
             <button type="button" id="close-menu-btn" class="btn ghost">

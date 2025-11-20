@@ -7,6 +7,7 @@ const sizeInputEl = document.getElementById("size-input");
 const startScreenEl = document.getElementById("start-screen");
 const startFormEl = document.getElementById("start-form");
 const closeMenuBtn = document.getElementById("close-menu-btn");
+const previewGridEl = document.querySelector("[data-preview-grid]");
 const sizeOptionButtons = Array.from(
   document.querySelectorAll("[data-size-option]")
 );
@@ -547,6 +548,7 @@ function setPendingSizeSelection(selectedSize) {
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
+  updatePreviewGrid(selectedSize);
 }
 
 function getBestTimeForSize(targetSize) {
@@ -570,4 +572,20 @@ function updateSizeOptionTimes() {
           : "Bestzeit: --:--";
     }
   });
+}
+
+function updatePreviewGrid(previewSize) {
+  if (!previewGridEl) return;
+  const target = SIZE_OPTIONS.includes(previewSize) ? previewSize : size;
+  previewGridEl.style.setProperty("--preview-size", target);
+  previewGridEl.innerHTML = "";
+  const totalCells = target * target;
+  for (let i = 0; i < totalCells; i += 1) {
+    const cell = document.createElement("span");
+    cell.className = "preview-cell";
+    if (i === totalCells - 1) {
+      cell.classList.add("is-empty");
+    }
+    previewGridEl.appendChild(cell);
+  }
 }
